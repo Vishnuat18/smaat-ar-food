@@ -1,13 +1,15 @@
 import * as THREE from 'https://esm.sh/three@0.152.0';
 import { GLTFLoader } from 'https://esm.sh/three@0.152.0/examples/jsm/loaders/GLTFLoader.js';
 import { CSS2DRenderer, CSS2DObject } from 'https://esm.sh/three@0.152.0/examples/jsm/renderers/CSS2DRenderer.js';
+import { OrbitControls } from 'https://esm.sh/three@0.152.0/examples/jsm/controls/OrbitControls.js';
 
-let camera, scene, renderer, labelRenderer;
+let camera, scene, renderer, labelRenderer, controls;
 let controller;
 let reticle;
 let model;
 let hitTestSource = null;
 let hitTestSourceRequested = false;
+let isARMode = false;
 
 const ingredients = [
   { name: 'Tomato', benefit: 'Vitamin C & Antioxidants', position: [0.1, 0.05, 0.1] },
@@ -26,13 +28,14 @@ function init() {
   scene = new THREE.Scene();
 
   camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+  camera.position.set(0, 0.5, 1);
 
   // WebGL Renderer
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.xr.enabled = true;
-  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
   container.appendChild(renderer.domElement);
 
   // CSS2D Renderer for labels
@@ -48,7 +51,7 @@ function init() {
   scene.add(light);
 
   const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
-  directionalLight.position.set(0, 10, 0);
+  directionalLight.position.set(2, 5, 2);
   scene.add(directionalLight);
 
   // Interaction: Controller (tap to place)
@@ -82,9 +85,22 @@ function init() {
 
     // Update UI
     progressText.innerText = '100%';
+    const startBtn = document.getElementById('start-ar-btn');
     startBtn.innerText = 'ENTER AR DISH';
     startBtn.disabled = false;
     startBtn.classList.add('ready');
+
+    // UI Listeners
+    startBtn.addEventListener('click', () => {
+      document.getElementById('intro-overlay').classList.add('fade-out');
+      // Check if we already detected no support
+      if (startBtn.getAttribute('data-ar-supported') === 'false') {
+        startFallbackSession();
+      } else {
+        startARSession();
+      }
+    });
+
   }, (xhr) => {
     // onProgress callback
     if (xhr.lengthComputable) {
@@ -96,6 +112,7 @@ function init() {
       progressText.innerText = 'Loading...';
     }
   }, (error) => {
+    const startBtn = document.getElementById('start-ar-btn');
     console.error('GLTF Loader Error:', error);
     progressText.innerText = 'Error!';
     startBtn.innerText = 'RELOAD PAGE';
@@ -103,11 +120,8 @@ function init() {
     startBtn.onclick = () => window.location.reload();
   });
 
-  // UI Listeners
-  document.getElementById('start-ar-btn').addEventListener('click', () => {
-    document.getElementById('intro-overlay').classList.add('fade-out');
-    startARSession();
-  });
+  // Pre-check AR Support on load
+  checkARSupport();
 
   window.addEventListener('resize', onWindowResize);
 
@@ -125,9 +139,7 @@ function createOverlays() {
     `;
     
     const label = new CSS2DObject(div);
-    // Relative position
     const pos = new THREE.Vector3(...item.position);
-    // Offset label vertically
     label.position.set(pos.x, pos.y + 0.25, pos.z);
     label.visible = false;
     labels.push(label);
@@ -145,45 +157,81 @@ function createOverlays() {
   });
 }
 
-async function startARSession() {
-  const sessionInit = { requiredFeatures: ['hit-test'] };
-  try {
-    const session = await navigator.xr.requestSession('immersive-ar', sessionInit);
-    renderer.xr.setSession(session);
-    document.getElementById('ar-hud').classList.remove('hidden');
-    document.getElementById('status-msg').innerText = 'Point at floor to place dish';
-  } catch (err) {
-    alert('WebXR not supported on this device/browser');
-    console.error(err);
+async function checkARSupport() {
+  const startBtn = document.getElementById('start-ar-btn');
+  const isSupported = await navigator.xr?.isSessionSupported('immersive-ar');
+  
+  if (!isSupported) {
+    console.warn('WebXR not supported on this device');
+    startBtn.setAttribute('data-ar-supported', 'false');
+  } else {
+    startBtn.setAttribute('data-ar-supported', 'true');
   }
 }
 
+async function startARSession() {
+  const sessionInit = { 
+    requiredFeatures: ['local-floor'],
+    optionalFeatures: ['hit-test'] 
+  };
+  
+  try {
+    const session = await navigator.xr.requestSession('immersive-ar', sessionInit);
+    renderer.xr.setSession(session);
+    isARMode = true;
+    document.getElementById('ar-hud').classList.remove('hidden');
+    document.getElementById('status-msg').innerText = 'Scanning for surfaces...';
+  } catch (err) {
+    console.error('AR Session Start Error:', err);
+    startFallbackSession();
+  }
+}
+
+function startFallbackSession() {
+  if (controls) return;
+  isARMode = false;
+  
+  const hud = document.getElementById('ar-hud');
+  hud.classList.remove('hidden');
+  document.querySelector('.badge').innerText = '3D PREVIEW';
+  document.getElementById('status-msg').innerText = 'WebXR Not Supported - Viewing 3D Mockup';
+
+  scene.add(model);
+  model.position.set(0, -0.1, 0);
+
+  labels.forEach(label => {
+    model.add(label);
+    label.visible = true;
+  });
+  
+  lines.forEach(line => {
+    model.add(line);
+    line.visible = true;
+  });
+
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 2;
+  
+  camera.position.set(0.5, 0.5, 1);
+  camera.lookAt(0, 0, 0);
+}
+
 function onSelect() {
-  if (reticle.visible && model) {
-    // We already have a dish? Re-place it or add new? 
-    // User goal: "The model should remain fixed in real world"
-    // Let's hide the old one or just move it.
-    
+  if (isARMode && reticle.visible && model) {
     model.position.setFromMatrixPosition(reticle.matrix);
     
-    // Add labels and lines to the model instead of scene so they move with it
     if (!model.parent) {
       scene.add(model);
-      
-      labels.forEach((label, i) => {
-        model.add(label);
-        label.visible = true;
-      });
-      
-      lines.forEach((line) => {
-        model.add(line);
-        line.visible = true;
-      });
+      labels.forEach(label => { model.add(label); label.visible = true; });
+      lines.forEach(line => { model.add(line); line.visible = true; });
     }
 
     document.getElementById('status-msg').innerText = 'Object Placed - Walk Around!';
     reticle.visible = false;
-    hitTestSource = null; // Stop hit testing once placed? Or keep it?
+    hitTestSource = null;
   }
 }
 
@@ -195,7 +243,7 @@ function onWindowResize() {
 }
 
 function render(timestamp, frame) {
-  if (frame) {
+  if (isARMode && frame) {
     const referenceSpace = renderer.xr.getReferenceSpace();
     const session = renderer.xr.getSession();
 
@@ -221,11 +269,16 @@ function render(timestamp, frame) {
     }
   }
 
-  // Animation: Slight rotation for visual interest
   if (model && model.parent) {
-    model.rotation.y += 0.005;
+    if (isARMode) {
+      model.rotation.y += 0.005;
+    } else {
+      if (controls) controls.update();
+    }
   }
 
   renderer.render(scene, camera);
   labelRenderer.render(scene, camera);
-}
+}
+
+
