@@ -1,7 +1,6 @@
-import * as THREE from 'https://cdn.skypack.dev/three@0.152.0';
-import { ARButton } from 'https://cdn.skypack.dev/three/examples/jsm/webxr/ARButton.js';
-import { GLTFLoader } from 'https://cdn.skypack.dev/three/examples/jsm/loaders/GLTFLoader.js';
-import { CSS2DRenderer, CSS2DObject } from 'https://cdn.skypack.dev/three/examples/jsm/renderers/CSS2DRenderer.js';
+import * as THREE from 'https://esm.sh/three@0.152.0';
+import { GLTFLoader } from 'https://esm.sh/three@0.152.0/examples/jsm/loaders/GLTFLoader.js';
+import { CSS2DRenderer, CSS2DObject } from 'https://esm.sh/three@0.152.0/examples/jsm/renderers/CSS2DRenderer.js';
 
 let camera, scene, renderer, labelRenderer;
 let controller;
@@ -67,15 +66,41 @@ function init() {
 
   // Load Model
   const loader = new GLTFLoader();
+  const progressText = document.getElementById('loading-progress');
+  const startBtn = document.getElementById('start-ar-btn');
+
+  console.log('Starting model load: model/dish.glb');
+
   loader.load('model/dish.glb', (gltf) => {
+    console.log('Model loaded successfully!');
     model = gltf.scene;
     // Scale model (0.3 sounds right for a plate)
     model.scale.set(0.3, 0.3, 0.3);
     
     // Create ingredient overlays
     createOverlays();
-  }, undefined, (error) => {
-    console.error('An error happened', error);
+
+    // Update UI
+    progressText.innerText = '100%';
+    startBtn.innerText = 'ENTER AR DISH';
+    startBtn.disabled = false;
+    startBtn.classList.add('ready');
+  }, (xhr) => {
+    // onProgress callback
+    if (xhr.lengthComputable) {
+      const percent = Math.round((xhr.loaded / xhr.total) * 100);
+      progressText.innerText = percent + '%';
+      console.log(`Loading: ${percent}%`);
+    } else {
+      // In case content-length is missing
+      progressText.innerText = 'Loading...';
+    }
+  }, (error) => {
+    console.error('GLTF Loader Error:', error);
+    progressText.innerText = 'Error!';
+    startBtn.innerText = 'RELOAD PAGE';
+    startBtn.disabled = false;
+    startBtn.onclick = () => window.location.reload();
   });
 
   // UI Listeners

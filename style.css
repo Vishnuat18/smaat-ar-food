@@ -76,12 +76,23 @@ body {
 
 .loader-container {
   margin-bottom: 3rem;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#loading-progress {
+  position: absolute;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gold);
 }
 
 .loader-ring {
-  width: 60px;
-  height: 60px;
-  border: 2px solid transparent;
+  width: 90px;
+  height: 90px;
+  border: 2px solid rgba(255, 215, 0, 0.1);
   border-top-color: var(--gold);
   border-radius: 50%;
   animation: spin 1.5s linear infinite;
@@ -105,9 +116,20 @@ body {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  opacity: 0.5;
 }
 
-.premium-btn:hover {
+.ready {
+  opacity: 1;
+}
+
+.premium-btn:disabled {
+  border-color: #333;
+  color: #555;
+  cursor: not-allowed;
+}
+
+.premium-btn:not(:disabled):hover {
   background: var(--gold);
   color: black;
   box-shadow: 0 0 30px var(--gold-glow);
