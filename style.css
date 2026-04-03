@@ -1,0 +1,272 @@
+:root {
+  --gold: #FFD700;
+  --gold-glow: rgba(255, 215, 0, 0.4);
+  --dark-bg: #0a0a0a;
+  --glass-bg: rgba(20, 20, 20, 0.7);
+  --glass-border: rgba(255, 215, 0, 0.2);
+  --text-primary: #ffffff;
+  --text-secondary: #cccccc;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--dark-bg);
+  color: var(--text-primary);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+#container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* Intro Overlay */
+#intro-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  transition: opacity 1s ease-in-out;
+}
+
+#intro-overlay.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#intro-overlay .content {
+  text-align: center;
+}
+
+.glow-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 700;
+  letter-spacing: 0.5rem;
+  color: var(--gold);
+  text-shadow: 0 0 20px var(--gold-glow);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.2rem;
+  margin-bottom: 3rem;
+  text-transform: uppercase;
+}
+
+.loader-container {
+  margin-bottom: 3rem;
+}
+
+.loader-ring {
+  width: 60px;
+  height: 60px;
+  border: 2px solid transparent;
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 1.5s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.premium-btn {
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: 1rem 2.5rem;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.premium-btn:hover {
+  background: var(--gold);
+  color: black;
+  box-shadow: 0 0 30px var(--gold-glow);
+}
+
+.hint {
+  margin-top: 1.5rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* HUD Styling */
+#ar-hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2rem;
+  transition: opacity 0.5s ease;
+}
+
+.hidden {
+  opacity: 0;
+}
+
+.top-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.badge {
+  background: var(--gold);
+  color: black;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 1rem;
+  border-radius: 100px;
+  letter-spacing: 0.1rem;
+}
+
+#status-msg {
+  font-size: 0.9rem;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Bottom Panel */
+.bottom-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  pointer-events: auto;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+#dish-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.5rem;
+  color: var(--gold);
+}
+
+.health-score {
+  text-align: right;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.health-score span {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.score-circle {
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 1rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-item .label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.stat-item .value {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Ingredient Labels (CSS2D) */
+.ingredient-label {
+  background: var(--glass-bg);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border-left: 3px solid var(--gold);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  color: white;
+  pointer-events: none;
+  min-width: 120px;
+  transform: translateY(-20px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.ingredient-label .name {
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--gold);
+  display: block;
+}
+
+.ingredient-label .benefit {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+/* AR Button styling override (Three.js provides its own, but we can try to style it or use our own) */
+#ARButton {
+  display: none !important; /* We'll trigger AR session manually */
+}
