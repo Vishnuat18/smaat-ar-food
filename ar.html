@@ -1,83 +1,74 @@
 <!DOCTYPE html>
 <html>
-
 <head>
   <meta charset="UTF-8">
   <title>AR View</title>
 
   <script type="module">
 
-    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.js';
-    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
-    import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/webxr/ARButton.js';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.js';
 
-    let camera, scene, renderer;
-    let controller;
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const selectedDish = urlParams.get('dish') || "pizza";
+import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/webxr/ARButton.js';
 
-    const models = {
-      egg: "models/egg.glb",
-      burger: "models/burger.glb",
-      pizza: "models/pizza.glb"
-    };
+let camera, scene, renderer;
 
-    init();
+const urlParams = new URLSearchParams(window.location.search);
+const selectedDish = urlParams.get('dish') || "pizza";
 
-    function init() {
-      scene = new THREE.Scene();
+const models = {
+  egg: "models/egg.glb",
+  burger: "models/burger.glb",
+  pizza: "models/pizza.glb"
+};
 
-      camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+init();
 
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.xr.enabled = true;
+function init() {
+  scene = new THREE.Scene();
 
-      document.body.appendChild(renderer.domElement);
+  camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 20);
 
-      document.body.appendChild(ARButton.createButton(renderer, {
-        requiredFeatures: ['hit-test']
-      }));
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.xr.enabled = true;
 
-      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-      scene.add(light);
+  document.body.appendChild(renderer.domElement);
 
-      controller = renderer.xr.getController(0);
-      scene.add(controller);
+  document.body.appendChild(ARButton.createButton(renderer, {
+    requiredFeatures: ['hit-test']
+  }));
 
-      loadModel();
+  const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+  scene.add(light);
 
-      renderer.setAnimationLoop(render);
-    }
+  loadModel();
 
-    function loadModel() {
-      const loader = new GLTFLoader();
+  renderer.setAnimationLoop(() => {
+    renderer.render(scene, camera);
+  });
+}
 
-      loader.load(models[selectedDish], (gltf) => {
-        const model = gltf.scene;
+function loadModel() {
+  const loader = new GLTFLoader();
 
-        model.scale.set(0.3, 0.3, 0.3);
-        model.position.set(0, -0.5, -1); // in front of camera
+  loader.load(models[selectedDish], (gltf) => {
+    const model = gltf.scene;
 
-        scene.add(model);
-      });
-    }
+    model.scale.set(0.3, 0.3, 0.3);
+    model.position.set(0, -0.5, -1);
 
-    function render() {
-      renderer.render(scene, camera);
-    }
+    scene.add(model);
+  });
+}
 
   </script>
 
   <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-    }
+    body { margin: 0; overflow: hidden; }
   </style>
 </head>
 
 <body></body>
-
 </html>
