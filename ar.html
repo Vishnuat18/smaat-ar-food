@@ -1,24 +1,83 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>AR View</title>
 
-  <!-- ✅ Correct Three.js version -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.126.1/build/three.min.js"></script>
+  <script type="module">
 
-  <!-- ✅ Correct GLTF Loader -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.126.1/examples/js/loaders/GLTFLoader.js"></script>
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.js';
+    import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/loaders/GLTFLoader.js';
+    import { ARButton } from 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/webxr/ARButton.js';
 
-  <!-- ✅ MindAR (NON-module version) -->
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-three.prod.js"></script>
+    let camera, scene, renderer;
+    let controller;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const selectedDish = urlParams.get('dish') || "pizza";
+
+    const models = {
+      egg: "models/egg.glb",
+      burger: "models/burger.glb",
+      pizza: "models/pizza.glb"
+    };
+
+    init();
+
+    function init() {
+      scene = new THREE.Scene();
+
+      camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.xr.enabled = true;
+
+      document.body.appendChild(renderer.domElement);
+
+      document.body.appendChild(ARButton.createButton(renderer, {
+        requiredFeatures: ['hit-test']
+      }));
+
+      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+      scene.add(light);
+
+      controller = renderer.xr.getController(0);
+      scene.add(controller);
+
+      loadModel();
+
+      renderer.setAnimationLoop(render);
+    }
+
+    function loadModel() {
+      const loader = new GLTFLoader();
+
+      loader.load(models[selectedDish], (gltf) => {
+        const model = gltf.scene;
+
+        model.scale.set(0.3, 0.3, 0.3);
+        model.position.set(0, -0.5, -1); // in front of camera
+
+        scene.add(model);
+      });
+    }
+
+    function render() {
+      renderer.render(scene, camera);
+    }
+
+  </script>
 
   <style>
-    body { margin: 0; overflow: hidden; }
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
   </style>
 </head>
 
-<body>
-<script src="ar.js"></script>
-</body>
+<body></body>
+
 </html>
